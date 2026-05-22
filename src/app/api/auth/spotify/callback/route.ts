@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { spotifyApi } from '@/lib/spotify'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
