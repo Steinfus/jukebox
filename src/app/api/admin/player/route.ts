@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'play_next') {
-      // Récupère la chanson en tête de file
       const { data: nextTrack } = await supabaseAdmin
         .from('queue')
         .select('*')
@@ -47,12 +46,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'File vide' }, { status: 404 })
       }
 
-      // Lance la chanson sur Spotify
+      // Prend l'appareil actif en priorité, sinon le premier disponible
+      const devicesRes = await spotify.getMyDevices()
+      const devices = devicesRes.body.devices
+      const device = devices.find(d => d.is_active) || devices[0]
+
+      if (!device) {
+        return NextResponse.json({ error: 'Aucun appareil Spotify disponible' }, { status: 404 })
+      }
+
       await spotify.play({
+        device_id: device.id as string,
         uris: [`spotify:track:${nextTrack.spotify_track_id}`]
       })
 
-      // Met à jour le statut dans la file
       await supabaseAdmin
         .from('queue')
         .update({ status: 'playing', played_at: new Date().toISOString() })
