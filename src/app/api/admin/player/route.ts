@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSpotifyClient } from '@/lib/spotify'
 import { supabaseAdmin } from '@/lib/supabase-server'
 
+export async function GET() {
+  try {
+    const spotify = await getSpotifyClient()
+    const devices = await spotify.getMyDevices()
+    return NextResponse.json({ devices: devices.body.devices })
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { action } = await request.json()
