@@ -33,19 +33,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'play_next') {
-      const { data: nextTrack } = await supabaseAdmin
-        .from('queue')
-        .select('*')
-        .eq('status', 'pending')
-        .order('votes', { ascending: false })
-        .order('proposed_at', { ascending: true })
-        .limit(1)
-        .single()
+  const { data: nextTrack } = await supabaseAdmin
+    .from('queue')
+    .select('*')
+    .eq('status', 'pending')
+    .order('votes', { ascending: false })
+    .order('proposed_at', { ascending: true })
+    .limit(1)
+    .single()
 
-      if (!nextTrack) {
-        return NextResponse.json({ error: 'File vide' }, { status: 404 })
-      }
+  if (!nextTrack) {
+    return NextResponse.json({ error: 'File vide' }, { status: 404 })
+  }
 
+  // Ajoute à la file Spotify sans changer l'appareil actif
+  await spotify.addToQueue(`spotify:track:${nextTrack.spotify_track_id}`)
+
+  await supabaseAdmin
+    .from('queue')
+    .update({ status: 'playing', played_at: new Date().toISOString() })
+    .eq('id', nextTrack.id)
+
+  return NextResponse.json({ success: true, track: nextTrack })
+}
       // Sans device_id — Spotify envoie sur l'appareil actuellement actif
       await spotify.play({
         uris: [`spotify:track:${nextTrack.spotify_track_id}`]
