@@ -99,6 +99,21 @@ export default function AdminPage() {
     }
   }
 
+  const playNext = async () => {
+    const res = await fetch('/api/admin/player', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'play_next' }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      showFeedback(`▶ ${data.track.title} lancée sur Spotify`, 'success')
+      loadQueue()
+    } else {
+      showFeedback(data.error || 'Erreur', 'error')
+    }
+  }
+
   const resetQueue = async () => {
     if (!isResetting) {
       setIsResetting(true)
@@ -175,12 +190,20 @@ export default function AdminPage() {
       <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-bold text-green-400">Panel gérant</h1>
-          <button
-            onClick={skipTrack}
-            className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg transition-colors"
-          >
-            ⏭ Skip
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={playNext}
+              style={{ background: '#1a8a7a', color: 'white', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              >
+              ▶ Lancer
+            </button>
+            <button
+              onClick={skipTrack}
+              style={{ background: '#2e2720', color: '#a09080', border: '1px solid rgba(200,169,110,0.2)', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+              >
+              ⏭ Skip
+            </button>
+          </div>
         </div>
 
         {/* Onglets */}
