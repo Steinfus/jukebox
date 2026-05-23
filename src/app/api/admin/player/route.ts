@@ -46,17 +46,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'File vide' }, { status: 404 })
       }
 
-      // Prend l'appareil actif en priorité, sinon le premier disponible
-      const devicesRes = await spotify.getMyDevices()
-      const devices = devicesRes.body.devices
-      const device = devices.find(d => d.is_active) || devices[0]
-
-      if (!device) {
-        return NextResponse.json({ error: 'Aucun appareil Spotify disponible' }, { status: 404 })
-      }
-
+      // Sans device_id — Spotify envoie sur l'appareil actuellement actif
       await spotify.play({
-        device_id: device.id as string,
         uris: [`spotify:track:${nextTrack.spotify_track_id}`]
       })
 
