@@ -35,8 +35,6 @@ export default function ClientPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [view, setView] = useState<'search' | 'queue'>('search')
-
-  // Utilise le hook temps réel
   const { queue, loadQueue } = useQueue()
 
   useEffect(() => {
@@ -46,10 +44,7 @@ export default function ClientPage() {
   }, [])
 
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setSearchResults([])
-      return
-    }
+    if (query.trim().length < 2) { setSearchResults([]); return }
     const timer = setTimeout(async () => {
       setIsSearching(true)
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
@@ -72,13 +67,12 @@ export default function ClientPage() {
       body: JSON.stringify({ action: 'propose', track, session_id: sessionId }),
     })
     const data = await res.json()
-
     if (res.status === 403) {
-      showFeedback('Cet artiste n\'est pas disponible sur ce jukebox', 'error')
+      showFeedback("Cet artiste n'est pas disponible ici", 'error')
     } else if (res.status === 409) {
       showFeedback('Cette chanson est déjà dans la file !', 'error')
     } else if (data.success) {
-      showFeedback('Chanson ajoutée à la file ! 🎵', 'success')
+      showFeedback('Chanson ajoutée à la file !', 'success')
       setQuery('')
       setSearchResults([])
       const newVoted = new Set(votedIds).add(data.entry.id)
@@ -92,16 +86,14 @@ export default function ClientPage() {
 
   const voteForTrack = async (queueId: string) => {
     if (votedIds.has(queueId)) return
-
     const res = await fetch('/api/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'vote', queue_id: queueId, session_id: sessionId }),
     })
     const data = await res.json()
-
     if (data.success) {
-      showFeedback('Vote enregistré ! 👍', 'success')
+      showFeedback('Vote enregistré !', 'success')
       const newVoted = new Set(votedIds).add(queueId)
       setVotedIds(newVoted)
       localStorage.setItem('jukebox_voted', JSON.stringify([...newVoted]))
@@ -111,115 +103,147 @@ export default function ClientPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-center text-green-400">🎵 Jukebox</h1>
-        <div className="flex mt-3 bg-gray-800 rounded-lg p-1">
+    <div style={{ minHeight: '100vh', background: '#1a1510', color: '#f0e8d8', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+
+      {/* Header */}
+      <div style={{ background: '#241e17', borderBottom: '1px solid rgba(200,169,110,0.2)', padding: '24px 16px 14px', position: 'sticky', top: 0, zIndex: 10 }}>
+        
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+          <span style={{ fontSize: '38px', fontWeight: 700, color: '#f0e8d8', letterSpacing: '12px', fontFamily: 'Georgia, serif', lineHeight: 1 }}>
+            MOS
+          </span>
+        </div>
+        <div style={{ fontSize: '10px', letterSpacing: '5px', color: '#c8a96e', textTransform: 'uppercase', textAlign: 'center', marginBottom: '16px' }}>
+          Maker of Songs
+        </div>
+
+        {/* Séparateur */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(200,169,110,0.2)' }} />
+          <div style={{ width: '5px', height: '5px', background: '#c8a96e', transform: 'rotate(45deg)', flexShrink: 0 }} />
+          <div style={{ flex: 1, height: '1px', background: 'rgba(200,169,110,0.2)' }} />
+        </div>
+
+        {/* Onglets */}
+        <div style={{ display: 'flex', background: '#1a1510', borderRadius: '10px', padding: '3px', gap: '3px' }}>
           <button
             onClick={() => setView('search')}
-            className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-              view === 'search' ? 'bg-green-500 text-black' : 'text-gray-400'
-            }`}
+            style={{ flex: 1, padding: '9px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', background: view === 'search' ? '#1a8a7a' : 'transparent', color: view === 'search' ? 'white' : '#a09080', transition: 'all 0.2s' }}
           >
             Rechercher
           </button>
           <button
             onClick={() => setView('queue')}
-            className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-              view === 'queue' ? 'bg-green-500 text-black' : 'text-gray-400'
-            }`}
+            style={{ flex: 1, padding: '9px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', background: view === 'queue' ? '#1a8a7a' : 'transparent', color: view === 'queue' ? 'white' : '#a09080', transition: 'all 0.2s' }}
           >
             File ({queue.length})
           </button>
         </div>
       </div>
 
+      {/* Feedback */}
       {feedback && (
-        <div className={`mx-4 mt-4 p-3 rounded-lg text-sm text-center font-medium ${
-          feedback.type === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
-        }`}>
+        <div style={{ margin: '12px 16px 0', padding: '12px 16px', borderRadius: '10px', fontSize: '13px', textAlign: 'center', fontWeight: 500, letterSpacing: '0.5px', background: feedback.type === 'success' ? 'rgba(26,138,122,0.2)' : 'rgba(180,60,40,0.2)', border: `1px solid ${feedback.type === 'success' ? '#1a8a7a' : 'rgba(180,60,40,0.5)'}`, color: feedback.type === 'success' ? '#2ab5a0' : '#e07060' }}>
           {feedback.message}
         </div>
       )}
 
-      <div className="px-4 py-4">
+      <div style={{ padding: '14px 16px' }}>
+
+        {/* Vue recherche */}
         {view === 'search' && (
           <div>
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Titre, artiste..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 text-base"
-              autoFocus
-            />
+            {/* Barre de recherche */}
+            <div style={{ background: '#241e17', border: '1px solid rgba(200,169,110,0.2)', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ color: '#c8a96e', fontSize: '16px', flexShrink: 0 }}>♪</span>
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Titre, artiste..."
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#f0e8d8', fontSize: '14px' }}
+                autoFocus
+              />
+            </div>
+
             {isSearching && (
-              <p className="text-center text-gray-500 mt-6">Recherche...</p>
+              <p style={{ textAlign: 'center', color: '#a09080', fontSize: '13px', marginTop: '24px' }}>Recherche...</p>
             )}
-            <div className="mt-3 space-y-2">
+
+            {searchResults.length > 0 && (
+              <div style={{ fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '10px' }}>
+                Résultats
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {searchResults.map(track => (
                 <button
                   key={track.id}
                   onClick={() => proposeTrack(track)}
-                  className="w-full flex items-center gap-3 bg-gray-800 hover:bg-gray-700 rounded-xl p-3 transition-colors text-left"
+                  style={{ background: '#241e17', border: '1px solid rgba(200,169,110,0.2)', borderRadius: '12px', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color 0.2s' }}
                 >
-                  {track.cover_url && (
-                    <img src={track.cover_url} alt={track.album} className="w-12 h-12 rounded-lg flex-shrink-0" />
+                  {track.cover_url ? (
+                    <img src={track.cover_url} alt="" style={{ width: '44px', height: '44px', borderRadius: '8px', flexShrink: 0, objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: '#1a3a4a', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c8a96e' }}>♪</div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{track.title}</p>
-                    <p className="text-gray-400 text-sm truncate">{track.artist}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#f0e8d8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.title}</div>
+                    <div style={{ fontSize: '11px', color: '#a09080', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.artist}</div>
                   </div>
-                  <span className="text-gray-500 text-sm flex-shrink-0">{formatDuration(track.duration_ms)}</span>
+                  <span style={{ fontSize: '11px', color: '#a09080', flexShrink: 0 }}>{formatDuration(track.duration_ms)}</span>
                 </button>
               ))}
             </div>
+
             {query.length >= 2 && !isSearching && searchResults.length === 0 && (
-              <p className="text-center text-gray-500 mt-6">Aucun résultat</p>
+              <p style={{ textAlign: 'center', color: '#a09080', fontSize: '13px', marginTop: '32px' }}>Aucun résultat</p>
             )}
+
             {query.length === 0 && (
-              <p className="text-center text-gray-600 mt-8 text-sm">Tape le nom d'une chanson ou d'un artiste</p>
+              <p style={{ textAlign: 'center', color: '#5a5040', fontSize: '13px', marginTop: '40px', letterSpacing: '0.5px' }}>Tape le nom d'une chanson ou d'un artiste</p>
             )}
           </div>
         )}
 
+        {/* Vue file d'attente */}
         {view === 'queue' && (
           <div>
             {queue.length === 0 ? (
-              <div className="text-center mt-12">
-                <p className="text-gray-500">La file est vide</p>
+              <div style={{ textAlign: 'center', marginTop: '60px' }}>
+                <p style={{ color: '#a09080', fontSize: '13px', letterSpacing: '0.5px' }}>La file est vide</p>
                 <button
                   onClick={() => setView('search')}
-                  className="mt-4 bg-green-500 text-black font-medium px-6 py-2 rounded-full text-sm"
+                  style={{ marginTop: '16px', background: '#1a8a7a', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '24px', fontSize: '12px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
                 >
                   Proposer une chanson
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {queue.map((entry, index) => {
                   const hasVoted = votedIds.has(entry.id)
                   return (
-                    <div key={entry.id} className="flex items-center gap-3 bg-gray-800 rounded-xl p-3">
-                      <span className="text-gray-600 text-sm w-5 text-center flex-shrink-0">{index + 1}</span>
-                      {entry.cover_url && (
-                        <img src={entry.cover_url} alt="" className="w-12 h-12 rounded-lg flex-shrink-0" />
+                    <div key={entry.id} style={{ background: '#241e17', border: '1px solid rgba(200,169,110,0.2)', borderRadius: '12px', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ color: '#5a5040', fontSize: '12px', width: '16px', textAlign: 'center', flexShrink: 0 }}>{index + 1}</span>
+                      {entry.cover_url ? (
+                        <img src={entry.cover_url} alt="" style={{ width: '44px', height: '44px', borderRadius: '8px', flexShrink: 0, objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: '#1a3a4a', flexShrink: 0 }} />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{entry.title}</p>
-                        <p className="text-gray-400 text-sm truncate">{entry.artist}</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f0e8d8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.title}</div>
+                        <div style={{ fontSize: '11px', color: '#a09080', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.artist}</div>
                       </div>
                       <button
                         onClick={() => voteForTrack(entry.id)}
                         disabled={hasVoted}
-                        className={`flex flex-col items-center px-3 py-2 rounded-lg transition-colors flex-shrink-0 ${
-                          hasVoted
-                            ? 'bg-green-900 text-green-400 cursor-default'
-                            : 'bg-gray-700 hover:bg-gray-600 text-white'
-                        }`}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: hasVoted ? '#0f5c52' : '#1a1510', border: `1px solid ${hasVoted ? '#1a8a7a' : 'rgba(200,169,110,0.2)'}`, borderRadius: '8px', padding: '6px 10px', flexShrink: 0, cursor: hasVoted ? 'default' : 'pointer' }}
                       >
-                        <span className="text-lg">{hasVoted ? '✓' : '👍'}</span>
-                        <span className="text-xs font-bold">{entry.votes}</span>
+                        <span style={{ fontSize: '13px', color: hasVoted ? '#2ab5a0' : '#c8a96e' }}>{hasVoted ? '✓' : '↑'}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#f0e8d8', marginTop: '2px' }}>{entry.votes}</span>
                       </button>
                     </div>
                   )
